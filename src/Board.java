@@ -7,6 +7,8 @@ import java.awt.event.KeyListener;
 import java.util.Random;
 
 public class Board extends JPanel implements KeyListener {
+
+
     private static int FPS = 60 ;
     private static int delay = FPS/1000 ;
     public static final int BOARD_WIDTH = 10 ;
@@ -66,7 +68,7 @@ public class Board extends JPanel implements KeyListener {
 
         looper = new Timer(delay, new ActionListener()
         {
-            int n = 0 ;
+
             @Override
             public void actionPerformed(ActionEvent e) {
                 update();
@@ -85,9 +87,27 @@ public class Board extends JPanel implements KeyListener {
     {
         currentShape = shapes[random.nextInt(shapes.length)] ;
         currentShape.reset();
-
-
+        checkGameOver();
     }
+
+    private void checkGameOver()
+    {
+        int [][] coordis = currentShape.getCoordis();
+        for(int row=0;row< coordis.length ;row++)
+        {
+            for(int col=0;col< coordis[0].length ; col++)
+            {
+                if(coordis[row][col]  != 0 )
+                {
+                    if(board[row+currentShape.getY()][col+currentShape.getX()] !=null)
+                    {
+                        System.out.println("Game Over ");
+                    }
+                }
+            }
+        }
+    }
+
 
     @Override
     protected void paintComponent(Graphics g) {
