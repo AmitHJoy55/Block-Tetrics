@@ -141,23 +141,7 @@ public class Shape {
     {
         int [] [] rotateShape = transposeMatrix(coordis) ;
         reverse(rotateShape);
-        //Check for right side and bottom
-        if( (x+rotateShape[0].length >Board.BOARD_WIDTH) || (y+rotateShape.length > 20))
-        {
-            return;
-        }
-        //Check for Collision with other shapes before rotated
-        for(int row=0;row< rotateShape.length ;row++)
-        {
-            for(int col =0;col< rotateShape[row].length ; col++)
-            {
-                if(rotateShape[row][col] !=0)
-                {
-                    if(board.getBoard()[y+ row ][x+col] != null)
-                        return;
-                }
-            }
-        }
+
         coordis = rotateShape ;
     }
 
@@ -201,12 +185,6 @@ public class Shape {
             }
         }
     }
-
-    public int[][] getCoordis()
-    {
-        return coordis ;
-    }
-
     public void speedUp()
     {
         delayTimeForMovement = fast ;
@@ -222,16 +200,6 @@ public class Shape {
     public void moveLeft()
     {
         deltaX = -1 ;
-    }
-
-    public  int getY()
-    {
-        return y;
-    }
-
-    public  int getX()
-    {
-        return x;
     }
 
 }

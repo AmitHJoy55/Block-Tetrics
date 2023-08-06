@@ -7,12 +7,6 @@ import java.awt.event.KeyListener;
 import java.util.Random;
 
 public class Board extends JPanel implements KeyListener {
-
-    public static int STATE_GAME_PLAY = 0;
-    public static int STATE_GAME_PAUSE = 1;
-    public static int STATE_GAME_OVER = 2;
-    private int state = STATE_GAME_PLAY ;
-
     private static int FPS = 60 ;
     private static int delay = FPS/1000 ;
     public static final int BOARD_WIDTH = 10 ;
@@ -72,7 +66,7 @@ public class Board extends JPanel implements KeyListener {
 
         looper = new Timer(delay, new ActionListener()
         {
-
+            int n = 0 ;
             @Override
             public void actionPerformed(ActionEvent e) {
                 update();
@@ -84,38 +78,16 @@ public class Board extends JPanel implements KeyListener {
 
     public void update()
     {
-        if( state == STATE_GAME_PLAY)
-        {
-            currentShape.update();
-        }
-
+        currentShape.update(); ;
     }
 
     public void setCurrentShape()
     {
         currentShape = shapes[random.nextInt(shapes.length)] ;
         currentShape.reset();
-        checkGameOver();
-    }
 
-    private void checkGameOver()
-    {
-        int [][] coordis = currentShape.getCoordis();
-        for(int row=0;row< coordis.length ;row++)
-        {
-            for(int col=0;col< coordis[0].length ; col++)
-            {
-                if(coordis[row][col]  != 0 )
-                {
-                    if(board[row+currentShape.getY()][col+currentShape.getX()] !=null)
-                    {
-                        state = STATE_GAME_OVER ;
-                    }
-                }
-            }
-        }
-    }
 
+    }
 
     @Override
     protected void paintComponent(Graphics g) {
@@ -146,19 +118,6 @@ public class Board extends JPanel implements KeyListener {
         {
             g.drawLine(col* BLOCK_SIZE,0 ,col* BLOCK_SIZE,BLOCK_SIZE * BOARD_HEIGHT );
         }
-        //Show GAME OVER when the Game is over
-        if(state == STATE_GAME_OVER)
-        {
-            g.setColor(Color.WHITE);
-            g.drawString("GAME OVER",330,100);
-        }
-        //Show GAME PAUSE when the Game is Paused
-        if(state == STATE_GAME_PAUSE)
-        {
-            g.setColor(Color.WHITE);
-            g.drawString("GAME PAUSE",330,100);
-        }
-
 
 
     }
@@ -184,38 +143,6 @@ public class Board extends JPanel implements KeyListener {
             currentShape.moveLeft();
         else if(e.getKeyCode() == KeyEvent.VK_UP)
             currentShape.rotateShape();
-
-        //Cleaning the Board at The GAMEOVER state
-        if(state == STATE_GAME_OVER)
-        {
-            //Start new game by pressing "SPACE BUTTON"
-            if(e.getKeyCode() == KeyEvent.VK_SPACE) {
-
-                for(int row=0; row<board.length ; row++) {
-                    for (int col = 0; col < board[row].length; col++)
-                    {
-                        board[row][col] = null ;
-                    }
-                }
-                setCurrentShape();
-                state = STATE_GAME_PLAY ;
-            }
-        }
-        //PAUSE and START the Game by pressing "P"
-
-        if(e.getKeyCode() == KeyEvent.VK_P) {
-            if(state == STATE_GAME_PLAY)
-            {
-                state = STATE_GAME_PAUSE ;
-            }
-            else if(state == STATE_GAME_PAUSE)
-            {
-                state = STATE_GAME_PLAY ;
-            }
-
-        }
-
-
 
     }
 
