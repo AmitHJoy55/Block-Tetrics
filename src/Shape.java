@@ -1,205 +1,225 @@
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics;
 
 public class Shape {
 
-    private int x = 4,y = 0;
-    private int normal = 600 ;
-    private int fast = 50;
-    private int delayTimeForMovement =  normal ;
+    private Color color;
 
-    private long beginTime ;
+    private int x, y;
 
-    private int deltaX =0 ;
-    private boolean collision = false ;
+    private long time, lastTime;
 
-    private int[][] coordis ;
+    private int normal = 600, fast = 50;
+
+    private int delay;
+
+    private int[][] coordis;
+
+    private int[][] reference;
+
+    private int deltaX;
+
     private Board board;
 
-    private Color color ;
-    public Shape(int[][] coordis ,Board board , Color color )
-    {
+    private boolean collision = false, moveX = false;
+
+    private int timePassedFromCollision = -1;
+
+    public Shape(int[][] coordis, Board board, Color color) {
         this.coordis = coordis;
-        this.board = board ;
-        this.color = color ;
+        this.board = board;
+        this.color = color;
+        deltaX = 0;
+        x = 4;
+        y = 0;
+        delay = normal;
+        time = 0;
+        lastTime = System.currentTimeMillis();
+        reference = new int[coordis.length][coordis[0].length];
+
+        System.arraycopy(coordis, 0, reference, 0, coordis.length);
+
     }
 
-    public void setX(int x)
-    {
-        this.x = x ;
-    }
+    long deltaTime;
 
-    public void setY(int y)
-    {
-        this.y = y  ;
-    }
+    public void update() {
+        moveX = true;
+        deltaTime = System.currentTimeMillis() - lastTime;
+        time += deltaTime;
+        lastTime = System.currentTimeMillis();
 
-    public void reset ()
-    {
-        this.x = 4;
-        this.y = 0;
-        collision = false ;
-    }
-
-
-
-
-    public void update()
-    {
-        if(collision)
-        {
-            //Fill the color for board
-            for(int row=0;row<coordis.length ; row++) {
-                for (int col = 0; col < coordis[0].length; col++)
-                {
-                    if(coordis[row][col] !=0 )
-                    {
-                        board.getBoard()[ y+ row ][x + col] = color  ;
+        if (collision && timePassedFromCollision > 500) {
+            for (int row = 0; row < coordis.length; row++) {
+                for (int col = 0; col < coordis[0].length; col++) {
+                    if (coordis[row][col] != 0) {
+                        board.getBoard()[y + row][x + col] = color;
                     }
                 }
             }
             checkLine();
-            //Set Current shape
+            board.addScore();
             board.setCurrentShape();
-            return ;
+            timePassedFromCollision = -1;
         }
 
-        //Check Moving in Horizontal
-        boolean moveX = true ;
-        if( !( x + deltaX + coordis[0].length > 10) && !(x+deltaX < 0) )
-        {
-            for(int row=0 ;row <coordis.length ; row++)
-            {
-                for(int col=0;col < coordis[row].length; col++)
-                {
-                    if(coordis[row][col] != 0)
-                    {
-                        if( board.getBoard() [y+row][ x+deltaX+col] != null)
-                            moveX = false ;
-                    }
+        // check moving horizontal
+        if (!(x + deltaX + coordis[0].length > 10) && !(x + deltaX < 0)) {
 
+            for (int row = 0; row < coordis.length; row++) {
+                for (int col = 0; col < coordis[row].length; col++) {
+                    if (coordis[row][col] != 0) {
+                        if (board.getBoard()[y + row][x + deltaX + col] != null) {
+                            moveX = false;
+                        }
+
+                    }
                 }
             }
-            if(moveX)
-            {
-                x+= deltaX ;
+
+            if (moveX) {
+                x += deltaX;
             }
+
         }
-        deltaX = 0 ;
-        //Checking Moving in Vertical if it hit the ground
-        if(System.currentTimeMillis() - beginTime > delayTimeForMovement)
-        {
-            if( !( y+ 1+ coordis.length > Board.BOARD_HEIGHT ))
-            {
-                //Checking collision with other blocks
-                for(int row=0 ;row <coordis.length ; row++)
-                {
-                    for(int col=0;col < coordis[row].length; col++)
-                    {
-                        if(coordis[row][col] != 0)
-                            if(board.getBoard()[y +1+row][ x+deltaX+col] !=null  )
-                                collision = true ;
+
+        // Check position + height(number of row) of shape
+        if (timePassedFromCollision == -1) {
+            if (!(y + 1 + coordis.length > 20)) {
+
+                for (int row = 0; row < coordis.length; row++) {
+                    for (int col = 0; col < coordis[row].length; col++) {
+                        if (coordis[row][col] != 0) {
+
+                            if (board.getBoard()[y + 1 + row][x + col] != null) {
+                                collision();
+                            }
+                        }
                     }
                 }
-                if( !collision )
-                {
-                    y++ ;
+                if (time > delay) {
+                    y++;
+                    time = 0;
+                }
+            } else {
+                collision();
+            }
+        } else {
+            timePassedFromCollision += deltaTime;
+        }
+
+        deltaX = 0;
+    }
+
+    private void collision() {
+        collision = true;
+        timePassedFromCollision = 0;
+    }
+
+    public void render(Graphics g) {
+
+        g.setColor(color);
+        for (int row = 0; row < coordis.length; row++) {
+            for (int col = 0; col < coordis[0].length; col++) {
+                if (coordis[row][col] != 0) {
+                    g.fillRect(col * 30 + x * 30, row * 30 + y * 30, Board.blockSize, Board.blockSize);
                 }
             }
-            else
-            {
-                collision = true ;
-            }
-
-            beginTime = System.currentTimeMillis();
         }
     }
 
-    public void checkLine()
-    {
-        int bottomLine = board.getBoard().length - 1 ;
-        for(int topline = board.getBoard().length - 1 ; topline>0 ; topline--)
-        {
+    private void checkLine() {
+        int size = board.getBoard().length - 1;
+
+        for (int i = board.getBoard().length - 1; i > 0; i--) {
             int count = 0;
-            for(int col =0;col< board.getBoard()[0].length ; col++)
-            {
-                if(board.getBoard()[topline][col] != null)
+            for (int j = 0; j < board.getBoard()[0].length; j++) {
+                if (board.getBoard()[i][j] != null) {
                     count++;
-                //Checking if the line is full with block then the top line will fall on bottonline
-                board.getBoard()[bottomLine][col] = board.getBoard()[topline][col] ;
+                }
 
+                board.getBoard()[size][j] = board.getBoard()[i][j];
             }
-            if(count< board.getBoard()[0].length  )
-            {
-                bottomLine--;
-            }
-
-        }
-    }
-
-
-    public void rotateShape()
-    {
-        int [] [] rotateShape = transposeMatrix(coordis) ;
-        reverse(rotateShape);
-
-        coordis = rotateShape ;
-    }
-
-    public int[][] transposeMatrix(int[][] matrix)
-    {
-        int[][]temp = new int[matrix[0].length][matrix.length] ;
-        for(int row=0 ; row< matrix.length ;row++)
-        {
-            for(int col =0;col<matrix[0].length;col++)
-            {
-                temp[col][row] = matrix[row][col] ;
+            if (count < board.getBoard()[0].length) {
+                size--;
             }
         }
-        return temp ;
     }
 
-    private void reverse(int [][] matrix)
-    {
-        int middle = matrix.length / 2 ;
-        for(int row=0; row<middle ;row++)
-        {
-            int[] temp =matrix[row] ;
-            matrix[row] = matrix[matrix.length - row -1 ] ;
-            matrix[matrix.length-row-1] = temp;
+    public void rotateShape() {
+
+        int[][] rotatedShape = null;
+
+        rotatedShape = transposeMatrix(coordis);
+
+        rotatedShape = reverseRows(rotatedShape);
+
+        if ((x + rotatedShape[0].length > 10) || (y + rotatedShape.length > 20)) {
+            return;
         }
-    }
 
-    public void render (Graphics g)
-    {
-        //Drawing the shape
-        for(int row =0 ; row < coordis.length; row++)
-        {
-            for(int col =0 ; col < coordis[0].length; col++)
-            {
-                if(coordis[row][col] != 0 )
-                {
-                    g.setColor(color);
-                    //Falling he blocks downward
-                    g.fillRect(col * Board.BLOCK_SIZE + x * Board.BLOCK_SIZE, row * Board.BLOCK_SIZE + y *Board.BLOCK_SIZE, Board.BLOCK_SIZE, Board.BLOCK_SIZE);
+        for (int row = 0; row < rotatedShape.length; row++) {
+            for (int col = 0; col < rotatedShape[row].length; col++) {
+                if (rotatedShape[row][col] != 0) {
+                    if (board.getBoard()[y + row][x + col] != null) {
+                        return;
+                    }
                 }
             }
         }
-    }
-    public void speedUp()
-    {
-        delayTimeForMovement = fast ;
-    }
-    public void speedDown()
-    {
-        delayTimeForMovement = normal  ;
-    }
-    public void moveRight()
-    {
-        deltaX = 1 ;
-    }
-    public void moveLeft()
-    {
-        deltaX = -1 ;
+        coordis = rotatedShape;
     }
 
+    private int[][] transposeMatrix(int[][] matrix) {
+        int[][] temp = new int[matrix[0].length][matrix.length];
+        for (int i = 0; i < matrix.length; i++) {
+            for (int j = 0; j < matrix[0].length; j++) {
+                temp[j][i] = matrix[i][j];
+            }
+        }
+        return temp;
+    }
+
+    private int[][] reverseRows(int[][] matrix) {
+
+        int middle = matrix.length / 2;
+
+        for (int i = 0; i < middle; i++) {
+            int[] temp = matrix[i];
+
+            matrix[i] = matrix[matrix.length - i - 1];
+            matrix[matrix.length - i - 1] = temp;
+        }
+
+        return matrix;
+
+    }
+
+    public Color getColor() {
+        return color;
+    }
+
+    public void setDeltaX(int deltaX) {
+        this.deltaX = deltaX;
+    }
+
+    public void speedUp() {
+        delay = fast;
+    }
+
+    public void speedDown() {
+        delay = normal;
+    }
+
+    public int[][] getCoordis() {
+        return coordis;
+    }
+
+    public int getX() {
+        return x;
+    }
+
+    public int getY() {
+        return y;
+    }
 }

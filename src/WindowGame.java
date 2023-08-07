@@ -6,6 +6,7 @@ public class WindowGame {
     private JFrame window ;
     private Board board;
 
+    private Title title ;
     public WindowGame()
     {
         window = new JFrame("Block Tetrics") ;
@@ -15,10 +16,25 @@ public class WindowGame {
         window.setLocationRelativeTo(null);
 
         board= new Board();
-        window.add(board) ;
+        title = new Title(this) ;
+
         window.addKeyListener(board);
+        window.addKeyListener(title);
+
+        window.add(title) ;
         window.setVisible(true);
     }
+
+    public void startTetris()
+    {
+        window.remove(title);
+        window.addMouseMotionListener(board);
+        window.addMouseListener(board);
+        window.add(board);
+        board.startGame();
+        window.revalidate();
+    }
+
     public static  void main (String[] args)
     {
 
